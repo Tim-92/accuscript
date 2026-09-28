@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <!-- Background Badge Gradient -->
+    <radialGradient id="badge-grad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E8F0FE" />
+    </radialGradient>
+
+    <!-- A Front Left Gradient -->
+    <linearGradient id="a-left-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2A4D7C" />
+      <stop offset="100%" stop-color="#1E3A5F" />
+    </linearGradient>
+
+    <!-- A Front Right Gradient -->
+    <linearGradient id="a-right-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A5F" />
+      <stop offset="100%" stop-color="#11233A" />
+    </linearGradient>
+
+    <!-- Plank Front Gradient -->
+    <linearGradient id="plank-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4A90E2" />
+      <stop offset="100%" stop-color="#2A6099" />
+    </linearGradient>
+
+    <!-- Main Drop Shadow for the A -->
+    <filter id="main-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="#0A1422" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Drop Shadow for the Transcript Line (Plank) -->
+    <filter id="plank-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-color="#0A1422" flood-opacity="0.4" />
+    </filter>
+
+    <!-- Glow for the Cursor Dot -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="0.75" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Soft Circular Badge -->
+  <circle cx="32" cy="32" r="28" fill="url(#badge-grad)" />
+  <circle cx="32" cy="32" r="27.5" fill="none" stroke="#D0E0FA" stroke-width="1" opacity="0.6" />
+
+  <!-- Subtle Document/Transcription Lines in Background -->
+  <g stroke="#B8CDE8" stroke-width="0.75" stroke-linecap="round" opacity="0.7">
+    <path d="M 18,20 L 46,20" />
+    <path d="M 18,26 L 36,26" />
+    <path d="M 18,50 L 46,50" />
+    <path d="M 18,56 L 32,56" />
+  </g>
+
+  <!-- Main Isometric 'A' -->
+  <g filter="url(#main-shadow)">
+    <!-- Extrusion Faces (3D Depth) -->
+    <!-- Outer Right Face -->
+    <path d="M 32,10 L 50,46 L 53,49 L 35,13 Z" fill="#0F1D30" />
+    <!-- Bottom Right Face -->
+    <path d="M 50,46 L 42,46 L 45,49 L 53,49 Z" fill="#0A1422" />
+    <!-- Bottom Left Face -->
+    <path d="M 22,46 L 14,46 L 17,49 L 25,49 Z" fill="#0F1D30" />
+    <!-- Inner Left Face -->
+    <path d="M 32,26 L 22,46 L 25,49 L 35,29 Z" fill="#1E3A5F" />
+
+    <!-- Front Faces (Faceted Ribbons) -->
+    <!-- Left Ribbon -->
+    <path d="M 32,10 L 14,46 L 22,46 L 32,26 Z" fill="url(#a-left-grad)" />
+    <!-- Right Ribbon -->
+    <path d="M 32,10 L 32,26 L 42,46 L 50,46 Z" fill="url(#a-right-grad)" />
+  </g>
+
+  <!-- Transcript Line (Isometric Plank / Crossbar) -->
+  <g filter="url(#plank-shadow)">
+    <!-- Plank Extrusion Faces -->
+    <!-- Plank Bottom Face -->
+    <path d="M 14,39 L 50,39 L 53,42 L 17,42 Z" fill="#153050" />
+    <!-- Plank Right Face -->
+    <path d="M 50,38 L 53,41 L 53,42 L 50,39 Z" fill="#1E4570" />
+    
+    <!-- Plank Front Face -->
+    <path d="M 14,38 L 50,38 L 50,39 L 14,39 Z" fill="url(#plank-grad)" />
+
+    <!-- Glowing Cursor Dot -->
+    <circle cx="47.5" cy="38.5" r="0.6" fill="#00E5FF" filter="url(#glow)" />
+  </g>
+</svg>
