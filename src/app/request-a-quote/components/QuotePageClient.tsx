@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
+import { submitQuote, uploadFileToR2 } from '@/lib/quoteClient';
 
 type ServiceType = 'transcription' | 'captioning';
 type TranscriptType = 'general' | 'legal';
@@ -60,6 +61,12 @@ export default function QuotePageClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>(1);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [submitError, setSubmitError] = useState('');
+  const [jobRef, setJobRef] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const verifiedRef = useRef<{ token: string; file: File } | null>(null);
   const [form, setForm] = useState<FormState>(() => {
     const svc = searchParams.get('service') as ServiceType | null;
     const mins = searchParams.get('minutes');
@@ -111,9 +118,54 @@ export default function QuotePageClient() {
   const step1Valid = validMinutes;
   const step2Valid = form.name.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      let verifiedToken: string | undefined;
+      if (form.file) {
+        // Reuse a previously verified upload of the same file on retry
+        if (verifiedRef.current && verifiedRef.current.file === form.file) {
+          verifiedToken = verifiedRef.current.token;
+        } else {
+          setUploadProgress(0);
+          const up = await uploadFileToR2(form.file, (f) => setUploadProgress(Math.min(1, f)));
+          verifiedRef.current = { token: up.verifiedToken, file: form.file };
+          verifiedToken = up.verifiedToken;
+          setUploadProgress(1);
+        }
+      }
+      const res = await submitQuote({
+        service: form.service,
+        minutes: parsedMinutes,
+        transcriptType: form.transcriptType,
+        transcriptStyle: form.transcriptStyle,
+        captionFormat: form.captionFormat,
+        speakerID: form.speakerID,
+        timestamps: form.timestamps,
+        rushService: form.rushService,
+        deliveryFormat: form.deliveryFormat,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        notes: form.notes,
+        fileLink: form.fileLink,
+        verifiedToken,
+        website: honeypot,
+      });
+      setJobRef(res.jobRef);
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong. Please try again or email tim@accu-script.com.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -133,13 +185,14 @@ export default function QuotePageClient() {
             <p className="text-xs font-700 uppercase tracking-wider text-muted-foreground mb-3">Your Request Summary</p>
             <SummaryRow label="Service" value={form.service === 'transcription' ? 'Transcription' : 'Captioning'} />
             <SummaryRow label="Duration" value={`${parsedMinutes} minutes`} />
+            {jobRef && <SummaryRow label="Job reference" value={jobRef} />}
             <SummaryRow label="Estimated starting price" value={`$${estimate.toFixed(2)}`} highlight />
             {form.file && <SummaryRow label="File uploaded" value={form.file.name} />}
             {form.fileLink && <SummaryRow label="File link" value={form.fileLink} />}
           </div>
           <p className="text-sm text-muted-foreground">
             Questions? Email me directly at{' '}
-            <a href="mailto:tim@accuscript.com" className="text-primary font-600 hover:underline">tim@accuscript.com</a>
+            <a href="mailto:tim@accu-script.com" className="text-primary font-600 hover:underline">tim@accu-script.com</a>
           </p>
         </div>
       </div>
@@ -464,7 +517,7 @@ export default function QuotePageClient() {
 
           {/* ── STEP 3: Review & Submit ── */}
           {step === 3 && (
-            <div className="bg-card border border-border rounded-3xl p-8 space-y-6">
+            <div className="relative bg-card border border-border rounded-3xl p-8 space-y-6">
               <h2 className="text-base font-700 text-foreground">Step 3: Review Your Request</h2>
 
               <div className="bg-muted rounded-2xl p-6 space-y-2">
@@ -510,14 +563,49 @@ export default function QuotePageClient() {
                 </p>
               </div>
 
+              {/* Honeypot (hidden from real users) */}
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                className="absolute -left-[9999px] h-0 w-0 opacity-0"
+              />
+
+              {submitting && form.file && uploadProgress < 1 && (
+                <div role="status" aria-live="polite">
+                  <div className="flex justify-between text-xs font-600 text-foreground mb-2">
+                    <span>Uploading {form.file.name}…</span>
+                    <span>{Math.round(uploadProgress * 100)}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${Math.round(uploadProgress * 100)}%` }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Please keep this page open until the upload finishes.</p>
+                </div>
+              )}
+              {submitting && (!form.file || uploadProgress >= 1) && (
+                <p className="text-xs text-muted-foreground" role="status">Sending your request…</p>
+              )}
+
+              {submitError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 flex items-start gap-2" role="alert">
+                  <Icon name="ExclamationCircleIcon" size={16} className="mt-0.5 flex-shrink-0" />
+                  <span>{submitError} Your details are still here — press the button to retry.</span>
+                </div>
+              )}
+
               <div className="flex gap-3 flex-wrap">
-                <button type="button" onClick={() => setStep(2)}
-                  className="flex items-center gap-2 border border-border text-foreground px-6 py-3 rounded-full text-sm font-700 hover:bg-secondary transition-colors min-h-[44px]">
+                <button type="button" onClick={() => setStep(2)} disabled={submitting}
+                  className="flex items-center gap-2 border border-border text-foreground px-6 py-3 rounded-full text-sm font-700 hover:bg-secondary transition-colors min-h-[44px] disabled:opacity-40">
                   <Icon name="ArrowLeftIcon" size={16} /> Back
                 </button>
-                <button type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-full text-sm font-700 hover:bg-accent transition-colors min-h-[44px]">
-                  Submit Quote Request <Icon name="PaperAirplaneIcon" size={16} />
+                <button type="submit" disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-full text-sm font-700 hover:bg-accent transition-colors min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed">
+                  {submitting ? 'Submitting…' : submitError ? 'Retry Submit' : 'Submit Quote Request'} <Icon name="PaperAirplaneIcon" size={16} />
                 </button>
               </div>
             </div>
@@ -528,8 +616,8 @@ export default function QuotePageClient() {
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground">
             Prefer to reach out directly?{' '}
-            <a href="mailto:tim@accuscript.com" className="text-primary font-700 hover:underline">
-              Email Tim at tim@accuscript.com
+            <a href="mailto:tim@accu-script.com" className="text-primary font-700 hover:underline">
+              Email Tim at tim@accu-script.com
             </a>
           </p>
         </div>

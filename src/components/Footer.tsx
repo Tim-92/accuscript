@@ -70,11 +70,11 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <p className="text-xs font-700 uppercase tracking-widest text-muted-foreground">Contact</p>
             <a
-              href="mailto:tim@accuscript.com"
+              href="mailto:tim@accu-script.com"
               className="text-sm font-500 text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 min-h-[44px]"
             >
               <Icon name="EnvelopeIcon" size={16} />
-              tim@accuscript.com
+              tim@accu-script.com
             </a>
             <Link
               href="/contact"

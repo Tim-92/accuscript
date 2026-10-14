@@ -42,4 +42,13 @@ const nextConfig = {
     return config;
   },
 };
+
+// Enables Cloudflare bindings in `next dev` when the adapter is installed (no-op otherwise)
+try {
+  const { initOpenNextCloudflareForDev } = await import('@opennextjs/cloudflare');
+  initOpenNextCloudflareForDev();
+} catch {
+  // adapter not installed in this environment
+}
+
 export default nextConfig;

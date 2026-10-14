@@ -113,7 +113,7 @@ export default function WorkWithTimSection() {
                 <Icon name="ArrowRightIcon" size={16} />
               </Link>
               <a
-                href="mailto:tim@accuscript.com"
+                href="mailto:tim@accu-script.com"
                 className="inline-flex items-center gap-2 border border-border text-foreground bg-background px-7 py-4 rounded-full text-sm font-700 hover:bg-secondary transition-colors">
                 
                 <Icon name="EnvelopeIcon" size={16} />

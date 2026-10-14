@@ -22,7 +22,7 @@ export default function ContactBand() {
             <Icon name="ArrowRightIcon" size={16} />
           </Link>
           <a
-            href="mailto:tim@accuscript.com"
+            href="mailto:tim@accu-script.com"
             className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground px-8 py-4 rounded-full text-sm font-700 hover:bg-primary-foreground/10 transition-colors"
           >
             <Icon name="EnvelopeIcon" size={16} />

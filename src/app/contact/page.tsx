@@ -283,7 +283,7 @@ export default function ContactPage() {
                 <h2 className="text-base font-700 text-foreground mb-4">Direct Contact</h2>
                 <div className="flex flex-col gap-4">
                   <a
-                    href="mailto:tim@accuscript.com"
+                    href="mailto:tim@accu-script.com"
                     className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors group"
                   >
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
@@ -291,7 +291,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs font-600 text-muted-foreground uppercase tracking-wide mb-0.5">Email</p>
-                      <p className="font-600 text-foreground">tim@accuscript.com</p>
+                      <p className="font-600 text-foreground">tim@accu-script.com</p>
                     </div>
                   </a>
                 </div>
