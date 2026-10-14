@@ -81,7 +81,7 @@ export default function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden bg-background"
+      className="relative min-h-[90vh] flex items-center pt-28 pb-16 overflow-hidden bg-background"
       aria-label="Hero"
     >
       {/* Subtle blue tint background area */}
@@ -95,29 +95,24 @@ export default function HeroSection() {
         <div className="w-px h-20 bg-border" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 w-full">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full">
+        <div className="grid lg:grid-cols-12 gap-10 xl:gap-14 items-center">
           {/* Left: Text content */}
-          <div className="space-y-8">
-            <div className="reveal-hidden stagger-1">
-              <h1 className="text-hero-display text-foreground">
-                Your words<br />
-                <span className="text-primary">matter.</span><br />
-                I&apos;ll make sure<br />
-                they&apos;re captured<br />
-                properly.
+          <div className="lg:col-span-6 space-y-7">
+            <div className="reveal-hidden stagger-1 space-y-5">
+              <h1 className="text-4xl sm:text-5xl xl:text-6xl font-800 leading-[1.08] tracking-tight text-foreground">
+                Your words <span className="text-primary">matter.</span>
+                <br />
+                We make sure they&apos;re captured properly.
               </h1>
-            </div>
-
-            <div className="reveal-hidden stagger-2">
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
                 Professional transcription and captioning, human-reviewed on every project.
-                I help legal professionals, educators, researchers, businesses and content
+                We help legal professionals, educators, researchers, businesses and content
                 creators turn audio and video into accurate, organized and usable text.
               </p>
             </div>
 
-            <div className="reveal-hidden stagger-3 flex flex-wrap gap-3">
+            <div className="reveal-hidden stagger-2 flex flex-wrap gap-3">
               <Link
                 href="/request-a-quote"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-7 py-4 rounded-full text-sm font-700 hover:bg-accent transition-colors shadow-sm"
@@ -133,26 +128,24 @@ export default function HeroSection() {
               </Link>
             </div>
 
-            <div className="reveal-hidden stagger-4 flex items-center gap-6 pt-2">
-              <div className="text-center">
+            <div className="reveal-hidden stagger-3 grid grid-cols-3 gap-3 max-w-xl pt-2">
+              <div className="bg-card border border-border rounded-2xl px-4 py-4 text-center">
                 <p className="text-2xl font-800 text-primary">$0.55</p>
-                <p className="text-xs text-muted-foreground font-500 mt-0.5">per audio min<br />transcription</p>
+                <p className="text-xs text-muted-foreground font-500 mt-1">per audio min<br />transcription</p>
               </div>
-              <div className="w-px h-10 bg-border" />
-              <div className="text-center">
+              <div className="bg-card border border-border rounded-2xl px-4 py-4 text-center">
                 <p className="text-2xl font-800 text-primary">$0.75</p>
-                <p className="text-xs text-muted-foreground font-500 mt-0.5">per minute<br />captioning</p>
+                <p className="text-xs text-muted-foreground font-500 mt-1">per minute<br />captioning</p>
               </div>
-              <div className="w-px h-10 bg-border" />
-              <div className="text-center">
+              <div className="bg-card border border-border rounded-2xl px-4 py-4 text-center">
                 <p className="text-2xl font-800 text-foreground">100%</p>
-                <p className="text-xs text-muted-foreground font-500 mt-0.5">human<br />reviewed</p>
+                <p className="text-xs text-muted-foreground font-500 mt-1">human<br />reviewed</p>
               </div>
             </div>
           </div>
 
           {/* Right: Floating transcript cards */}
-          <div className="relative h-[520px] hidden lg:block">
+          <div className="lg:col-span-6 relative h-[500px] hidden lg:block">
             {/* Card 1 — top left */}
             <div
               className={`float-card-1 absolute top-0 left-0 bg-card border border-border rounded-2xl p-5 w-72 shadow-md`}

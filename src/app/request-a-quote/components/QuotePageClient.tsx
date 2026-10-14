@@ -139,7 +139,7 @@ export default function QuotePageClient() {
           </div>
           <p className="text-sm text-muted-foreground">
             Questions? Email me directly at{' '}
-            <a href="mailto:tim@accuscript.com" className="text-primary font-600 hover:underline">tim@accuscript.com</a>
+            <a href="mailto:tim@accu-script.com" className="text-primary font-600 hover:underline">tim@accu-script.com</a>
           </p>
         </div>
       </div>
@@ -528,8 +528,8 @@ export default function QuotePageClient() {
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground">
             Prefer to reach out directly?{' '}
-            <a href="mailto:tim@accuscript.com" className="text-primary font-700 hover:underline">
-              Email Tim at tim@accuscript.com
+            <a href="mailto:tim@accu-script.com" className="text-primary font-700 hover:underline">
+              Email Tim at tim@accu-script.com
             </a>
           </p>
         </div>
