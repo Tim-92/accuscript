@@ -85,6 +85,12 @@ Create a file named `_headers` (no extension) inside `public/` containing:
 npx wrangler login
 npm run deploy
 ```
+**If you deploy through Cloudflare Workers Builds (Git-connected)**, set these in Workers & Pages → your Worker → Settings → Build:
+- **Build command:** `npm run cf:build`  (runs `opennextjs-cloudflare build`, which creates `.open-next/`)
+- **Deploy command:** `npm run cf:deploy`  (runs `opennextjs-cloudflare deploy`)
+
+Do NOT use `npm run build` + `npx wrangler deploy`: that only runs `next build`, so `.open-next/` is never created and the deploy fails with "Could not find compiled Open Next config, did you run the build command?".
+
 Then add each variable from section 7 as a **secret**:
 ```
 npx wrangler secret put R2_ACCOUNT_ID
