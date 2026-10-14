@@ -1,0 +1,2 @@
+# Cloudflare local secrets (never commit). Copy from .env.example values.
+NEXTJS_ENV=development
