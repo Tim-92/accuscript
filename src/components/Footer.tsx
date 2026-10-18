@@ -14,8 +14,6 @@ const infoLinks = [
   { label: 'Home', href: '/' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Privacy Policy', href: '/' },
-  { label: 'Terms of Service', href: '/' },
 ];
 
 export default function Footer() {
@@ -96,15 +94,6 @@ export default function Footer() {
           <p className="text-xs text-muted-foreground font-500">
             © 2026 Accuscript. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-xs font-500 text-muted-foreground hover:text-foreground transition-colors">
-              Privacy Policy
-            </Link>
-            <span className="text-border">·</span>
-            <Link href="/" className="text-xs font-500 text-muted-foreground hover:text-foreground transition-colors">
-              Terms of Service
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

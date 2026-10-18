@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="badge-grad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E8F0FE" />
+    </radialGradient>
+    <linearGradient id="a-left-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2A4D7C" />
+      <stop offset="100%" stop-color="#1E3A5F" />
+    </linearGradient>
+    <linearGradient id="a-right-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A5F" />
+      <stop offset="100%" stop-color="#11233A" />
+    </linearGradient>
+    <linearGradient id="plank-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4A90E2" />
+      <stop offset="100%" stop-color="#2A6099" />
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#badge-grad)" />
+  <circle cx="32" cy="32" r="29.5" fill="none" stroke="#D0E0FA" stroke-width="1" />
+  <path d="M 32,10 L 50,46 L 53,49 L 35,13 Z" fill="#0F1D30" />
+  <path d="M 50,46 L 42,46 L 45,49 L 53,49 Z" fill="#0A1422" />
+  <path d="M 22,46 L 14,46 L 17,49 L 25,49 Z" fill="#0F1D30" />
+  <path d="M 32,26 L 22,46 L 25,49 L 35,29 Z" fill="#1E3A5F" />
+  <path d="M 32,10 L 14,46 L 22,46 L 32,26 Z" fill="url(#a-left-grad)" />
+  <path d="M 32,10 L 32,26 L 42,46 L 50,46 Z" fill="url(#a-right-grad)" />
+  <path d="M 14,39 L 50,39 L 53,42 L 17,42 Z" fill="#153050" />
+  <path d="M 50,38 L 53,41 L 53,42 L 50,39 Z" fill="#1E4570" />
+  <path d="M 14,38 L 50,38 L 50,39 L 14,39 Z" fill="url(#plank-grad)" />
+  <circle cx="47.5" cy="38.5" r="0.8" fill="#00E5FF" />
+</svg>
