@@ -31,9 +31,6 @@ export default function Footer() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Professional transcription &amp; captioning, human-reviewed on every project.
             </p>
-            <p className="text-xs text-muted-foreground font-500">
-              Modern technology. Human review. Direct communication.
-            </p>
           </div>
 
           {/* Services */}
