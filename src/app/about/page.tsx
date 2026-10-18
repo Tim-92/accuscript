@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -55,7 +54,7 @@ export default function AboutPage() {
       <main ref={sectionRef} className="pt-28 pb-24 bg-background">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-6 mb-24">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="max-w-3xl">
           {/* Text */}
           <div className="space-y-8">
             <div className="reveal-hidden stagger-1">
@@ -98,38 +97,6 @@ export default function AboutPage() {
                 <Icon name="EnvelopeIcon" size={16} />
                 Email Tim
               </a>
-            </div>
-          </div>
-
-          {/* Photo */}
-          <div className="relative flex justify-center lg:justify-end reveal-hidden stagger-2">
-            <div className="relative w-full max-w-sm">
-              <div
-                className="absolute inset-0 bg-secondary border border-border rounded-3xl"
-                style={{ transform: 'rotate(-3deg)' }}
-                aria-hidden="true" />
-              
-              <div className="relative rounded-3xl overflow-hidden aspect-[4/5] shadow-xl">
-                <AppImage
-                  src="https://img.rocket.new/generatedImages/rocket_gen_img_10ab3f616-1779380527128.png"
-                  alt="Tim, the owner and sole operator of Accuscript, smiling at a clean bright desk"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 90vw, 400px" />
-                
-              </div>
-              <div
-                className="absolute -bottom-8 -right-8 bg-card border border-border rounded-2xl p-5 shadow-lg w-52"
-                style={{ transform: 'rotate(3deg)' }}>
-                
-                <p className="text-xs font-700 uppercase tracking-wider text-muted-foreground mb-1">One point of contact</p>
-                <p className="text-lg font-800 text-foreground">Tim</p>
-                <p className="text-xs text-muted-foreground mt-1">Accuscript</p>
-                <div className="flex items-center gap-1.5 mt-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-xs text-muted-foreground">Available for new projects</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

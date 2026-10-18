@@ -103,7 +103,7 @@ export default function HeroSection() {
               <h1 className="text-4xl sm:text-5xl xl:text-6xl font-800 leading-[1.08] tracking-tight text-foreground">
                 Your words <span className="text-primary">matter.</span>
                 <br />
-                We make sure they&apos;re captured properly.
+                I&apos;ll make sure they&apos;re captured properly.
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
                 Professional transcription and captioning, human-reviewed on every project.
