@@ -1,10 +1,14 @@
-export const MAX_FILE_BYTES = Math.floor(1.5 * 1024 * 1024 * 1024);
+export type UploadPurpose = 'quote' | 'contact';
+
+export const MAX_FILE_BYTES = Math.floor(1.5 * 1024 * 1024 * 1024); // quote uploads
+export const CONTACT_MAX_FILE_BYTES = 100 * 1024 * 1024; // contact attachments (single PUT)
 export const SINGLE_PUT_MAX_BYTES = 100 * 1024 * 1024; // files up to 100MB use one PUT
-export const PART_SIZE_BYTES = 64 * 1024 * 1024; // multipart part size (R2 min 5MiB, max 10,000 parts)
+export const PART_SIZE_BYTES = 64 * 1024 * 1024; // multipart part size
 
 export const ALLOWED_EXTENSIONS = [
   'mp3', 'wav', 'mp4', 'm4a', 'ogg', 'mov', 'avi', 'webm', 'aac', 'flac',
 ] as const;
+export const CONTACT_EXTRA_EXTENSIONS = ['pdf', 'doc', 'docx'] as const;
 
 const EXT_MIME: Record<string, string> = {
   mp3: 'audio/mpeg',
@@ -17,6 +21,9 @@ const EXT_MIME: Record<string, string> = {
   webm: 'video/webm',
   aac: 'audio/aac',
   flac: 'audio/flac',
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
 export function sanitizeFilename(name: string): string {
@@ -40,8 +47,9 @@ export function mimeForExtension(ext: string): string {
   return EXT_MIME[ext] ?? 'application/octet-stream';
 }
 
-export function isAllowedExtension(ext: string): boolean {
-  return (ALLOWED_EXTENSIONS as readonly string[]).includes(ext);
+export function isAllowedExtension(ext: string, purpose: UploadPurpose = 'quote'): boolean {
+  if ((ALLOWED_EXTENSIONS as readonly string[]).includes(ext)) return true;
+  return purpose === 'contact' && (CONTACT_EXTRA_EXTENSIONS as readonly string[]).includes(ext);
 }
 
 export function isValidEmail(v: unknown): v is string {
@@ -50,7 +58,6 @@ export function isValidEmail(v: unknown): v is string {
 
 export function cleanText(v: unknown, max: number): string {
   if (typeof v !== 'string') return '';
-  // strip control chars except newline/tab
   // eslint-disable-next-line no-control-regex
   return v.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim().slice(0, max);
 }

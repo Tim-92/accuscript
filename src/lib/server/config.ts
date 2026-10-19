@@ -24,9 +24,19 @@ const REQUIRED = [
   'UPLOAD_TOKEN_SECRET',
 ] as const;
 
+// Rejects the placeholder values shipped in .env / .env.local.example
+const PLACEHOLDER = /^(your-|re_your|replace-with|changeme)/i;
+
 export function getServerConfig(): { config?: ServerConfig; missing: string[] } {
-  const missing = REQUIRED.filter((k) => !process.env[k] || process.env[k]!.startsWith('your-'));
-  if (missing.length > 0) return { missing: [...missing] };
+  const missing: string[] = REQUIRED.filter((k) => {
+    const v = process.env[k];
+    return !v || PLACEHOLDER.test(v);
+  });
+  const secret = process.env.UPLOAD_TOKEN_SECRET;
+  if (secret && !PLACEHOLDER.test(secret) && secret.length < 32 && !missing.includes('UPLOAD_TOKEN_SECRET')) {
+    missing.push('UPLOAD_TOKEN_SECRET');
+  }
+  if (missing.length > 0) return { missing };
   return {
     missing: [],
     config: {

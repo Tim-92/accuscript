@@ -18,6 +18,17 @@ export interface QuoteEmailData {
   fileLink?: string;
 }
 
+export interface ContactEmailData {
+  ref: string;
+  name: string;
+  email: string;
+  inquiryType: string;
+  message: string;
+  fileName?: string;
+  fileSize?: string;
+  downloadUrl?: string;
+}
+
 async function sendEmail(
   cfg: ServerConfig,
   payload: { to: string[]; subject: string; html: string; text: string; reply_to?: string },
@@ -41,7 +52,8 @@ async function sendEmail(
       }),
     });
     if (!res.ok) {
-      console.error('Resend error status', res.status);
+      const detail = await res.text().catch(() => '');
+      console.error('Resend error status', res.status, detail.slice(0, 300));
       return { ok: false, error: `Resend responded with status ${res.status}` };
     }
     return { ok: true };
@@ -131,5 +143,63 @@ export async function sendConfirmation(cfg: ServerConfig, d: QuoteEmailData) {
       reply_to: cfg.notificationEmail,
     },
     `confirm-${d.jobRef}`
+  );
+}
+
+export async function sendContactNotification(cfg: ServerConfig, d: ContactEmailData) {
+  const all: [string, string][] = [
+    ['Reference', d.ref],
+    ['Name', d.name],
+    ['Email', d.email],
+    ['Inquiry type', d.inquiryType],
+    ['Attachment', d.fileName ? `${d.fileName} (${d.fileSize ?? ''})` : '—'],
+  ];
+  const download = d.downloadUrl
+    ? `<p style="margin:16px 0"><a href="${escapeHtml(d.downloadUrl)}" style="background:#111;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">Download attachment (private link, expires in 7 days)</a></p>`
+    : '';
+  const html = `<div style="font-family:Arial,sans-serif;max-width:600px">
+<h2>New contact message ${escapeHtml(d.ref)}</h2>
+<table style="border-collapse:collapse;font-size:14px">${rows(all)}</table>
+${download}
+<p style="font-size:14px"><strong>Message:</strong><br/>${escapeHtml(d.message).replace(/\n/g, '<br/>')}</p>
+</div>`;
+  const text =
+    `New contact message ${d.ref}\n\n` +
+    all.map(([k, v]) => `${k}: ${v}`).join('\n') +
+    (d.downloadUrl ? `\n\nDownload attachment (private link, expires in 7 days):\n${d.downloadUrl}` : '') +
+    `\n\nMessage:\n${d.message}`;
+  return sendEmail(
+    cfg,
+    {
+      to: [cfg.notificationEmail],
+      subject: `Contact: ${d.inquiryType} — ${d.name} (${d.ref})`,
+      html,
+      text,
+      reply_to: d.email,
+    },
+    `contact-notify-${d.ref}`
+  );
+}
+
+export async function sendContactConfirmation(cfg: ServerConfig, d: ContactEmailData) {
+  const first = d.name.split(' ')[0] || d.name;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:600px">
+<h2>Thanks for reaching out, ${escapeHtml(first)}</h2>
+<p>I received your message and will reply personally, usually within one business day. Reference: <strong>${escapeHtml(d.ref)}</strong>.</p>
+<p style="font-size:13px;color:#666">Just reply to this email if you want to add anything.</p>
+<p>— Tim, AccuScript</p>
+</div>`;
+  const text =
+    `Thanks for reaching out, ${first}.\n\nI received your message and will reply personally, usually within one business day. Reference: ${d.ref}.\n\n— Tim, AccuScript`;
+  return sendEmail(
+    cfg,
+    {
+      to: [d.email],
+      subject: `We received your message (${d.ref})`,
+      html,
+      text,
+      reply_to: cfg.notificationEmail,
+    },
+    `contact-confirm-${d.ref}`
   );
 }
