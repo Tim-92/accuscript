@@ -1,3 +1,5 @@
+export type UploadPurpose = 'quote' | 'contact';
+
 interface InitSingle {
   mode: 'single';
   jobRef: string;
@@ -51,9 +53,14 @@ async function postJson<T>(path: string, payload: unknown): Promise<T> {
 
 export async function uploadFileToR2(
   file: File,
-  onProgress: (fraction: number) => void
+  onProgress: (fraction: number) => void,
+  purpose: UploadPurpose = 'quote'
 ): Promise<{ jobRef: string; verifiedToken: string }> {
-  const init = await postJson<InitResponse>('/api/upload/init', { filename: file.name, size: file.size });
+  const init = await postJson<InitResponse>('/api/upload/init', {
+    filename: file.name,
+    size: file.size,
+    purpose,
+  });
 
   if (init.mode === 'single') {
     await putWithProgress(init.url, file, init.contentType, (loaded) => onProgress(loaded / file.size));
@@ -99,4 +106,8 @@ export async function uploadFileToR2(
 
 export async function submitQuote(payload: Record<string, unknown>) {
   return postJson<{ ok: boolean; jobRef: string; confirmationSent?: boolean }>('/api/quote', payload);
+}
+
+export async function submitContact(payload: Record<string, unknown>) {
+  return postJson<{ ok: boolean; ref: string; confirmationSent?: boolean }>('/api/contact', payload);
 }
