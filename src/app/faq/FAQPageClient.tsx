@@ -75,7 +75,7 @@ const faqCategories: FAQCategory[] = [
     items: [
       {
         q: 'What audio and video file formats do you accept?',
-        a: "I accept most common audio and video formats, including MP3, MP4, WAV, M4A, MOV, AAC, FLAC, OGG, WMA, AVI and more. If you're unsure whether your format is supported, just ask before uploading. I can usually work with any format that plays on a standard media player.",
+        a: "I accept most common audio and video formats, including MP3, MP4, WAV, M4A, MOV, AAC, FLAC, OGG, AVI and more. If you're unsure whether your format is supported, just ask before uploading. I can usually work with any format that plays on a standard media player.",
       },
       {
         q: 'What file formats do you deliver?',
