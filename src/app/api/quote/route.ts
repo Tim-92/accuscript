@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   }
 
   // Honeypot
-  if (typeof b.website === 'string' && b.website.length > 0) {
+  if (typeof b.hp_field === 'string' && b.hp_field.length > 0) {
     return NextResponse.json({ ok: true, jobRef: 'AS-OK' });
   }
 
