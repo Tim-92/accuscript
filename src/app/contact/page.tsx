@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { submitContact, uploadFileToR2 } from '@/lib/quoteClient';
 
 const INQUIRY_TYPES = [
   'General Question',
@@ -20,12 +21,7 @@ const INQUIRY_TYPES = [
   'Other',
 ];
 
-const ACCEPTED_TYPES = [
-  'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac',
-  'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm',
-  'application/pdf', 'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
+const ACCEPTED_EXT = ['mp3', 'mp4', 'm4a', 'wav', 'ogg', 'flac', 'aac', 'mov', 'avi', 'webm', 'pdf', 'doc', 'docx'];
 const MAX_MB = 100;
 
 interface FormState {
@@ -35,18 +31,19 @@ interface FormState {
   message: string;
 }
 
+const EMPTY: FormState = { name: '', email: '', inquiryType: '', message: '' };
+
 export default function ContactPage() {
-  const [form, setForm] = useState<FormState>({
-    name: '',
-    email: '',
-    inquiryType: '',
-    message: '',
-  });
+  const [form, setForm] = useState<FormState>(EMPTY);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [honeypot, setHoneypot] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const verifiedRef = useRef<{ token: string; file: File } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -55,8 +52,10 @@ export default function ContactPage() {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
     setFileError('');
+    verifiedRef.current = null;
     if (!selected) { setFile(null); return; }
-    if (!ACCEPTED_TYPES.includes(selected.type)) {
+    const ext = selected.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!ACCEPTED_EXT.includes(ext)) {
       setFileError('Unsupported file type. Please upload an audio, video, PDF, or Word document.');
       setFile(null);
       return;
@@ -72,19 +71,52 @@ export default function ContactPage() {
   const removeFile = () => {
     setFile(null);
     setFileError('');
+    verifiedRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    setSubmitError('');
+    try {
+      let verifiedToken: string | undefined;
+      if (file) {
+        if (verifiedRef.current && verifiedRef.current.file === file) {
+          verifiedToken = verifiedRef.current.token;
+        } else {
+          setUploadProgress(0);
+          const up = await uploadFileToR2(file, (f) => setUploadProgress(Math.min(1, f)), 'contact');
+          verifiedRef.current = { token: up.verifiedToken, file };
+          verifiedToken = up.verifiedToken;
+          setUploadProgress(1);
+        }
+      }
+      await submitContact({ ...form, verifiedToken, hp_field: honeypot });
       setSubmitted(true);
-    }, 1200);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong. Please try again or email tim@accu-script.com.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetAll = () => {
+    setSubmitted(false);
+    setForm(EMPTY);
+    setFile(null);
+    setSubmitError('');
+    verifiedRef.current = null;
   };
 
   const isValid = form.name.trim() && form.email.trim() && form.inquiryType && form.message.trim();
+  const inputCls =
+    'w-full border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors bg-background';
 
   return (
     <>
@@ -92,8 +124,6 @@ export default function ContactPage() {
       <Header />
       <main className="min-h-screen bg-background pt-28 pb-20">
         <div className="max-w-5xl mx-auto px-6">
-
-          {/* Page Header */}
           <div className="mb-12">
             <p className="text-xs font-700 uppercase tracking-widest text-primary mb-3">Get in Touch</p>
             <h1 className="text-4xl md:text-5xl font-800 text-foreground tracking-tight leading-tight mb-4">
@@ -105,8 +135,6 @@ export default function ContactPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
-
-            {/* Form */}
             <div className="lg:col-span-3">
               {submitted ? (
                 <div className="bg-white border border-border rounded-2xl p-10 text-center shadow-sm">
@@ -115,68 +143,40 @@ export default function ContactPage() {
                   </div>
                   <h2 className="text-2xl font-700 text-foreground mb-3">Message Sent</h2>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Thanks for reaching out. I'll review your message and get back to you as soon as I can — usually within one business day.
+                    Thanks for reaching out. I&apos;ll review your message and get back to you as soon as I can — usually within one business day.
                   </p>
                   <button
-                    onClick={() => { setSubmitted(false); setForm({ name: '', email: '', inquiryType: '', message: '' }); setFile(null); }}
+                    onClick={resetAll}
                     className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full text-sm font-700 hover:bg-accent transition-colors"
                   >
                     Send Another Message
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="bg-white border border-border rounded-2xl p-8 shadow-sm flex flex-col gap-6">
-
-                  {/* Name */}
+                <form onSubmit={handleSubmit} className="relative bg-white border border-border rounded-2xl p-8 shadow-sm flex flex-col gap-6">
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="name" className="text-sm font-600 text-foreground">
                       Your Name <span className="text-primary">*</span>
                     </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      autoComplete="name"
-                      required
-                      value={form.name}
-                      onChange={handleChange}
-                      placeholder="Jane Smith"
-                      className="w-full border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors bg-background"
-                    />
+                    <input id="name" name="name" type="text" autoComplete="name" required value={form.name}
+                      onChange={handleChange} placeholder="Jane Smith" className={inputCls} />
                   </div>
 
-                  {/* Email */}
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="email" className="text-sm font-600 text-foreground">
                       Email Address <span className="text-primary">*</span>
                     </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="jane@example.com"
-                      className="w-full border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors bg-background"
-                    />
+                    <input id="email" name="email" type="email" autoComplete="email" required value={form.email}
+                      onChange={handleChange} placeholder="jane@example.com" className={inputCls} />
                   </div>
 
-                  {/* Inquiry Type */}
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="inquiryType" className="text-sm font-600 text-foreground">
                       Inquiry Type <span className="text-primary">*</span>
                     </label>
                     <div className="relative">
-                      <select
-                        id="inquiryType"
-                        name="inquiryType"
-                        required
-                        value={form.inquiryType}
-                        onChange={handleChange}
-                        className="w-full border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors bg-background appearance-none pr-10"
-                      >
+                      <select id="inquiryType" name="inquiryType" required value={form.inquiryType}
+                        onChange={handleChange} className={`${inputCls} appearance-none pr-10`}>
                         <option value="" disabled>Select an inquiry type…</option>
                         {INQUIRY_TYPES.map((t) => (
                           <option key={t} value={t}>{t}</option>
@@ -188,24 +188,16 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  {/* Message */}
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="message" className="text-sm font-600 text-foreground">
                       Message <span className="text-primary">*</span>
                     </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      required
-                      rows={6}
-                      value={form.message}
+                    <textarea id="message" name="message" required rows={6} value={form.message}
                       onChange={handleChange}
                       placeholder="Tell me about your project, question, or anything else you'd like to discuss…"
-                      className="w-full border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors bg-background resize-none"
-                    />
+                      className={`${inputCls} resize-none`} />
                   </div>
 
-                  {/* File Upload (optional) */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-600 text-foreground">
                       Attach a File <span className="text-muted-foreground font-400">(optional)</span>
@@ -215,20 +207,13 @@ export default function ContactPage() {
                     </p>
 
                     {!file ? (
-                      <label
-                        htmlFor="file-upload"
-                        className="mt-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl px-6 py-8 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
-                      >
+                      <label htmlFor="file-upload"
+                        className="mt-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl px-6 py-8 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                         <Icon name="ArrowUpTrayIcon" size={24} className="text-muted-foreground" />
                         <span className="text-sm font-500 text-muted-foreground">Click to browse or drag a file here</span>
-                        <input
-                          id="file-upload"
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".mp3,.mp4,.m4a,.wav,.ogg,.flac,.aac,.mov,.avi,.webm,.pdf,.doc,.docx"
-                          onChange={handleFile}
-                          className="sr-only"
-                        />
+                        <input id="file-upload" ref={fileInputRef} type="file"
+                          accept={ACCEPTED_EXT.map((x) => `.${x}`).join(',')}
+                          onChange={handleFile} className="sr-only" />
                       </label>
                     ) : (
                       <div className="mt-1 flex items-center justify-between gap-3 border border-border rounded-xl px-4 py-3 bg-primary/5">
@@ -239,7 +224,8 @@ export default function ContactPage() {
                             <p className="text-xs text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(1)} MB</p>
                           </div>
                         </div>
-                        <button type="button" onClick={removeFile} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors p-1">
+                        <button type="button" onClick={removeFile} disabled={submitting}
+                          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors p-1">
                           <Icon name="XMarkIcon" size={18} />
                         </button>
                       </div>
@@ -253,12 +239,32 @@ export default function ContactPage() {
                     )}
                   </div>
 
-                  {/* Submit */}
-                  <button
-                    type="submit"
-                    disabled={!isValid || submitting}
-                    className="mt-2 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 rounded-full text-sm font-700 hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                  {/* Honeypot (hidden from real users) */}
+                  <input type="text" name="hp_field" tabIndex={-1} autoComplete="off" aria-hidden="true"
+                    value={honeypot} onChange={(e) => setHoneypot(e.target.value)}
+                    className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+
+                  {submitting && file && uploadProgress < 1 && (
+                    <div role="status" aria-live="polite">
+                      <div className="flex justify-between text-xs font-600 text-foreground mb-2">
+                        <span>Uploading {file.name}…</span>
+                        <span>{Math.round(uploadProgress * 100)}%</span>
+                      </div>
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary transition-all" style={{ width: `${Math.round(uploadProgress * 100)}%` }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {submitError && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 flex items-start gap-2" role="alert">
+                      <Icon name="ExclamationCircleIcon" size={16} className="mt-0.5 flex-shrink-0" />
+                      <span>{submitError} Your message is still here — press the button to retry.</span>
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={!isValid || submitting}
+                    className="mt-2 flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-4 rounded-full text-sm font-700 hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     {submitting ? (
                       <>
                         <span className="w-4 h-4 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
@@ -267,7 +273,7 @@ export default function ContactPage() {
                     ) : (
                       <>
                         <Icon name="PaperAirplaneIcon" size={16} />
-                        Send Message to Tim
+                        {submitError ? 'Retry' : 'Send Message to Tim'}
                       </>
                     )}
                   </button>
@@ -275,35 +281,27 @@ export default function ContactPage() {
               )}
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-2 flex flex-col gap-6">
-
-              {/* Direct contact card */}
               <div className="bg-white border border-border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-base font-700 text-foreground mb-4">Direct Contact</h2>
-                <div className="flex flex-col gap-4">
-                  <a
-                    href="mailto:tim@accu-script.com"
-                    className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors group"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                      <Icon name="EnvelopeIcon" size={16} className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-600 text-muted-foreground uppercase tracking-wide mb-0.5">Email</p>
-                      <p className="font-600 text-foreground">tim@accu-script.com</p>
-                    </div>
-                  </a>
-                </div>
+                <a href="mailto:tim@accu-script.com"
+                  className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors group">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <Icon name="EnvelopeIcon" size={16} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-600 text-muted-foreground uppercase tracking-wide mb-0.5">Email</p>
+                    <p className="font-600 text-foreground">tim@accu-script.com</p>
+                  </div>
+                </a>
               </div>
 
-              {/* What to expect */}
               <div className="bg-white border border-border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-base font-700 text-foreground mb-4">What to Expect</h2>
                 <ul className="flex flex-col gap-3">
                   {[
                     { icon: 'ClockIcon', text: 'I typically reply within one business day.' },
-                    { icon: 'UserCircleIcon', text: 'You\'ll hear directly from me — not a support bot.' },
+                    { icon: 'UserCircleIcon', text: "You'll hear directly from me — not a support bot." },
                     { icon: 'ChatBubbleLeftRightIcon', text: 'No pressure. Ask anything before committing to a project.' },
                     { icon: 'LockClosedIcon', text: 'Your details are kept private and never shared.' },
                   ].map((item) => (
@@ -315,16 +313,13 @@ export default function ContactPage() {
                 </ul>
               </div>
 
-              {/* Ready to order CTA */}
               <div className="bg-primary rounded-2xl p-6 text-primary-foreground">
                 <h2 className="text-base font-700 mb-2">Ready to place an order?</h2>
                 <p className="text-sm opacity-80 mb-4 leading-relaxed">
-                  If you already know what you need, skip straight to the quote form and I'll get started.
+                  If you already know what you need, skip straight to the quote form and I&apos;ll get started.
                 </p>
-                <Link
-                  href="/request-a-quote"
-                  className="inline-flex items-center gap-2 bg-white text-primary px-5 py-2.5 rounded-full text-sm font-700 hover:bg-secondary transition-colors"
-                >
+                <Link href="/request-a-quote"
+                  className="inline-flex items-center gap-2 bg-white text-primary px-5 py-2.5 rounded-full text-sm font-700 hover:bg-secondary transition-colors">
                   Request a Quote
                   <Icon name="ArrowRightIcon" size={14} />
                 </Link>
